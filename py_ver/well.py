@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 L = 200
 dx = 0.2
 Vx = np.zeros(L)
-Vx[0] = 100
-Vx[-1]= 100
+Vx[0] = 10
+Vx[-1]= 10
 #plt.plot(Vx)
 
 """
@@ -31,9 +31,9 @@ while(Tol>0):
     #    Y[i] = tmp_Y[i]
     for i in range(L):
         if i>0 and i<L-1:
-            ddY[i] = (Vx[i] - E - (Y[i+1]-Y[i-1])/2.)*-0.3
+            ddY[i] = (Vx[i] - E - (Y[i+1]-Y[i-1])/2.)*-0.05
         else:
-            ddY[i] = (Vx[i] - E)*-0.3
+            ddY[i] = (Vx[i] - E)*-0.05
     for i in range(L):
         if i>0 and i<L-1:
             dY[i] += (ddY[i-1]+ddY[i+1])*dx/2
