@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-L = 80
-dx = 0.05
+L = 200
+dx = 0.2
 Vx = np.zeros(L)
 Vx[0] = 100
 Vx[-1]= 100
@@ -14,11 +14,11 @@ Hy = Ey
 => ay'' + Ey = 0
 """
 Y = np.ones_like(Vx,dtype=float)
-E = 1
+E = -4
 dY = np.zeros_like(Vx,dtype=float)
 ddY = np.zeros_like(Vx,dtype=float)
 
-Tol = 20000
+Tol = 5000
 Max = 10
 
 tmp_Y = np.zeros_like(Vx,dtype=float)
@@ -30,15 +30,20 @@ while(Tol>0):
     #for i in range(L):
     #    Y[i] = tmp_Y[i]
     for i in range(L):
-        ddY[i] = (Vx[i] - E + Y[i])*-0.03
-    
-    for i in range(1,L-1):
-        dY[i] += (ddY[i-1]+ddY[i+1])*dx/2
+        if i>0 and i<L-1:
+            ddY[i] = (Vx[i] - E - (Y[i+1]-Y[i-1])/2.)*-0.3
+        else:
+            ddY[i] = (Vx[i] - E)*-0.3
+    for i in range(L):
+        if i>0 and i<L-1:
+            dY[i] += (ddY[i-1]+ddY[i+1])*dx/2
+        else:
+            dY[i] += ddY[i]*dx
     for i in range(L):
         Y[i] += dY[i]*dx/2
         #if dY[i]*dx < Tol:
         #    break
-    print(Y)
+    print(str(Tol)+"/5000",end='\r')
     #for i in range(L):
     #    if(Max < np.abs(Y[i]-tmp_Y[i])):
     #        Max = np.abs(Y[i]-tmp_Y[i])
@@ -46,4 +51,4 @@ while(Tol>0):
 
 plt.plot(Y)
 #plt.plot(ddY)
-plt.savefig('py_ver/well.jpg')
+plt.savefig('well.jpg')
