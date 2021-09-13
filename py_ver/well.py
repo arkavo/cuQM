@@ -40,7 +40,7 @@ while(Tol>0):
         else:
             dY[i] += ddY[i]*dx
     for i in range(L):
-        Y[i] += dY[i]*dx/2
+        Y[i] += dY[i]*dx
         #if dY[i]*dx < Tol:
         #    break
     print(str(Tol)+"/5000",end='\r')
@@ -48,7 +48,12 @@ while(Tol>0):
     #    if(Max < np.abs(Y[i]-tmp_Y[i])):
     #        Max = np.abs(Y[i]-tmp_Y[i])
     #        print(Max)
-
+sum = 0
+for i in range(L):
+    sum += Y[i]**2
+sum = sum**(0.5)
+Y = Y/(sum)
+print("A = "+str(float(sum)),end='\n')
 plt.plot(Y)
 #plt.plot(ddY)
 plt.savefig('well.jpg')
