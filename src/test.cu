@@ -51,7 +51,7 @@ __global__ void DERIVATIVE_STEP(double* y, double* ddy, double* V, double* E,dou
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
     if((idx>0) && (idx<(L-1)))
     {
-        *(ddy+idx) = (*(y+1+idx)-*(y-1+idx))/(2* (step)) + *(V+idx) - (*E);
+        *(ddy+idx) = (*(y+1+idx)-*(y-1+idx))/(2* (-1/step)) + *(V+idx) - (*E);
     }
     else
     {
@@ -76,9 +76,23 @@ __global__ void FINAL_STEP(double* Y,double* dY,double step,int L)
     *(Y+idx) = *(dY+idx) * step;
 }
 
+__global__ void NORMALIZE_CONSTANT(double* Y,double* res)
+{
+    int idx = threadIdx.x + blockIdx.x*blockDim.x;
+    *res += pow(*(Y+idx),2);
+}
+
+__global__ void NORMALIZE_FUNCTION(double* Y, double* res)
+{
+    int idx = threadIdx.x + blockIdx.x*blockDim.x;
+    *(Y+idx) = *(Y+idx) / *res; 
+}
 
 int main(int argc,char* argv[])
 {
+    std::ofstream file;
+    file.open("data.csv");
+    
     int L = stoi(argv[1]);    
     int threads = stoi(argv[2]);
     int blocks = int(L/threads);
@@ -88,15 +102,15 @@ int main(int argc,char* argv[])
     unsigned long long SIZE_0 = ((int)sizeof(double)*L);
     double* V_HST;
     double* V_DEV;
-    double Ev = 3.0;
+    double Ev = -1.5;
     double* E;
-    double step = 0.2;
+    double step = -0.05;
     double* Y_DEV;
     double* dY_DEV;
     double* ddY_DEV;
     double* Y_Final;
     //setup
-    int loops = 1000;
+    int loops = 80000;
     V_HST = (double*)malloc(SIZE_0);
     Y_Final = (double*)malloc(SIZE_0);
     
@@ -106,15 +120,16 @@ int main(int argc,char* argv[])
     cudaMalloc((void**)&ddY_DEV,SIZE_0);
     cudaMalloc((void**)&E,sizeof(double));
     
-    set_energy(V_HST,L,2.3);
+    set_energy(V_HST,L,-3.0);
+    *V_HST = 0;
+    *(V_HST+L-1) = 0;
     cudaMemcpy(V_DEV,V_HST,SIZE_0,cudaMemcpyHostToDevice);
     cudaMemcpy(E,&Ev,int(sizeof(double)),cudaMemcpyHostToDevice);
     
-    //ASSIGN <<<blocks,threads>>> (Y_Final, 0.1);
     ASSIGN <<<blocks,threads>>> (V_DEV, 0.); 
     ASSIGN <<<blocks,threads>>> (Y_DEV, 0.);
     ASSIGN <<<blocks,threads>>> (dY_DEV, 0.);
-    ASSIGN <<<blocks,threads>>> (ddY_DEV, 0.2);
+    ASSIGN <<<blocks,threads>>> (ddY_DEV, 0.);
     
     while(loops>0)
     {
@@ -127,5 +142,14 @@ int main(int argc,char* argv[])
     cudaMemcpy(Y_Final,Y_DEV,SIZE_0,cudaMemcpyDeviceToHost);
     std::cout<<"\n";
     display(Y_Final,L);
+    for(int i=0;i<L;i++)
+    {
+        file<<Y_Final[i]<<"\n";
+    }
+    cudaFree(V_DEV);
+    cudaFree(Y_DEV);
+    cudaFree(dY_DEV);
+    cudaFree(ddY_DEV);
+    
     return 0;
 }
