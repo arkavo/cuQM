@@ -51,7 +51,7 @@ __global__ void DERIVATIVE_STEP(double* y, double* ddy, double* V, double* E,dou
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
     if((idx>0) && (idx<(L-1)))
     {
-        *(ddy+idx) = (*(y+1+idx)-*(y-1+idx))/(2* (-1/step)) + *(V+idx) - (*E);
+        *(ddy+idx) = /*(*(y+1+idx)-*(y-1+idx))/(2 * pow(step,2)) */   ((*(V+idx) - (*E)) * *(y+idx));
     }
     else
     {
@@ -110,7 +110,7 @@ int main(int argc,char* argv[])
     double* ddY_DEV;
     double* Y_Final;
     //setup
-    int loops = 80000;
+    int loops = 8000;
     V_HST = (double*)malloc(SIZE_0);
     Y_Final = (double*)malloc(SIZE_0);
     
@@ -120,7 +120,7 @@ int main(int argc,char* argv[])
     cudaMalloc((void**)&ddY_DEV,SIZE_0);
     cudaMalloc((void**)&E,sizeof(double));
     
-    set_energy(V_HST,L,-3.0);
+    set_energy(V_HST,L,-30.0);
     *V_HST = 0;
     *(V_HST+L-1) = 0;
     cudaMemcpy(V_DEV,V_HST,SIZE_0,cudaMemcpyHostToDevice);
