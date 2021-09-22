@@ -46,7 +46,7 @@ __global__ void ASSIGN(double* dest, double val)
     *(dest + idx) = val;
 }
 
-__global__ void DERIVATIVE_STEP(double* y, double* ddy, double* V, double* E,double step, int L)
+__global__ void DERIVATIVE_STEP(double* y, double* ddy, double* V, double* E, int L)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
     if((idx>0) && (idx<(L-1)))
@@ -55,7 +55,7 @@ __global__ void DERIVATIVE_STEP(double* y, double* ddy, double* V, double* E,dou
     }
     else
     {
-        *(ddy+idx) = (*(V+idx) - *E) * (step);
+        *(ddy+idx) = (*(V+idx) - *E) ;
     }
 }
 __global__ void UPDATE_STEP(double* Y,double* dY, double* ddY,double step,int L)
@@ -73,7 +73,7 @@ __global__ void UPDATE_STEP(double* Y,double* dY, double* ddY,double step,int L)
 __global__ void FINAL_STEP(double* Y,double* dY,double step,int L)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
-    *(Y+idx) = *(dY+idx) * step;
+    *(Y+idx) += *(dY+idx) * step;
 }
 
 __global__ void NORMALIZE_CONSTANT(double* Y,double* res)
@@ -102,9 +102,9 @@ int main(int argc,char* argv[])
     unsigned long long SIZE_0 = ((int)sizeof(double)*L);
     double* V_HST;
     double* V_DEV;
-    double Ev = -1.5;
+    double Ev = -4.5;
     double* E;
-    double step = -0.05;
+    double step = -0.01;
     double* Y_DEV;
     double* dY_DEV;
     double* ddY_DEV;
@@ -120,14 +120,14 @@ int main(int argc,char* argv[])
     cudaMalloc((void**)&ddY_DEV,SIZE_0);
     cudaMalloc((void**)&E,sizeof(double));
     
-    set_energy(V_HST,L,-30.0);
-    *V_HST = 0;
-    *(V_HST+L-1) = 0;
+    set_energy(V_HST,L,0.);
+    *V_HST = 1000;
+    *(V_HST+L-1) = 1000;
     cudaMemcpy(V_DEV,V_HST,SIZE_0,cudaMemcpyHostToDevice);
     cudaMemcpy(E,&Ev,int(sizeof(double)),cudaMemcpyHostToDevice);
     
-    ASSIGN <<<blocks,threads>>> (V_DEV, 0.); 
-    ASSIGN <<<blocks,threads>>> (Y_DEV, 0.);
+    //ASSIGN <<<blocks,threads>>> (V_DEV, -2.); 
+    ASSIGN <<<blocks,threads>>> (Y_DEV, 10.);
     ASSIGN <<<blocks,threads>>> (dY_DEV, 0.);
     ASSIGN <<<blocks,threads>>> (ddY_DEV, 0.);
     
@@ -135,7 +135,7 @@ int main(int argc,char* argv[])
     {
         loops-=1;
         //std::cout<<loops<<"\n";
-        DERIVATIVE_STEP <<<blocks,threads>>> (Y_DEV,ddY_DEV,V_DEV,E,step,L);
+        DERIVATIVE_STEP <<<blocks,threads>>> (Y_DEV,ddY_DEV,V_DEV,E,L);
         UPDATE_STEP <<<blocks,threads>>> (Y_DEV,dY_DEV,ddY_DEV,step,L);
         FINAL_STEP <<<blocks,threads>>> (Y_DEV,dY_DEV,step,L);
     }
