@@ -1,7 +1,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
-#include "cuda.h"
+//#include "cuda.h"
 
 struct vector3
 {
