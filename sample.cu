@@ -1,6 +1,6 @@
 #include "cuQMstd.cuh"
 #include <iostream>
-#include "cuda.h"
+//#include "cuda.h"
 
 int main()
 {
@@ -49,7 +49,7 @@ int main()
     cudaMemcpy(sampleARR,sample1.ADDRESS,sample1.SIZE_X*sample1.SIZE_Y*sample1.SIZE_Z*sizeof(double),cudaMemcpyDeviceToHost);
     
     std::cout<<"Sizes X Y Z "<<sample1.SIZE_X<<sample1.SIZE_Y<<sample1.SIZE_Z<<'\n';
-    
+    /*
     for(int i=0;i<sample1.SIZE_X;i++)
     {
         for(int j=0;j<sample1.SIZE_Y;j++)
@@ -60,7 +60,9 @@ int main()
             }
         }
     }
-    
+    */
+    //insanely fast, print is the bootle neck
+    std::cout<<*(sampleARR+1000000-1)<<'\n';
     std::cout<<'\n';
     return 0;
 }
