@@ -6,7 +6,7 @@ int main()
 {
     SPACE sample1;
     
-    sample1.initialize(100,100,100);
+    sample1.initialize(100,1,1);
     
     double* space_arr;
     double* sampleARR;

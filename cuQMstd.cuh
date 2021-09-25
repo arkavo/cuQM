@@ -16,6 +16,49 @@ __global__ void ASSIGN(double* ADDRESS,double *DATA)
     *(ADDRESS + idx) = *(DATA + idx);
 }
 */
+__global__ void DERIVATIVE_STEP(double* y, double* ddy, double* V, double* E, int L)
+{
+    int idx = threadIdx.x + blockIdx.x*blockDim.x;
+    if((idx>0) && (idx<(L-1)))
+    {
+        *(ddy+idx) = ((*(V+idx) - (*E)) * *(y+idx));
+    }
+    else
+    {
+        *(ddy+idx) = (*(V+idx) - *E) ;
+    }
+}
+
+__global__ void UPDATE_STEP(double* Y,double* dY, double* ddY,double step,int L)
+{
+    int idx = threadIdx.x + blockIdx.x*blockDim.x;
+    if((idx>0)&&(idx<(L-1)))
+    {
+        *(dY+idx) += (*(ddY+idx+1)+*(ddY+idx-1))*step/2.;
+    }
+    else
+    {
+        *(dY+idx) += *(ddY+idx) * step;
+    }
+}
+__global__ void FINAL_STEP(double* Y,double* dY,double step,int L)
+{
+    int idx = threadIdx.x + blockIdx.x*blockDim.x;
+    *(Y+idx) += *(dY+idx) * step;
+}
+
+__global__ void NORMALIZE_CONSTANT(double* Y,double* res)
+{
+    int idx = threadIdx.x + blockIdx.x*blockDim.x;
+    *res += pow(*(Y+idx),2);
+}
+
+__global__ void NORMALIZE_FUNCTION(double* Y, double* res)
+{
+    int idx = threadIdx.x + blockIdx.x*blockDim.x;
+    *(Y+idx) = *(Y+idx) / *res; 
+}
+
 class SPACE
 {
     public:
@@ -74,5 +117,10 @@ class SPACE
             std::cout<<"\n";
         }
     }
-        
+    
+    void calx(int threads,double* E,double* V)
+    {
+        int blocks = int(SIZE_X/threads); 
+        DERIVATIVE_STEP<<<blocks,threads>>>(Y,ddY,V,E,SIZE_X);
+    }
 };
