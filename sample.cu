@@ -6,7 +6,7 @@ int main()
 {
     SPACE sample1;
     
-    sample1.initialize(100,1,1);
+    sample1.initialize(10,1,1);
     
     double* space_arr;
     double* sampleARR;
@@ -18,7 +18,8 @@ int main()
         {
             for(int k=0;k<sample1.SIZE_Z;k++)
             {
-                *(space_arr + i + j*sample1.SIZE_X + k*sample1.SIZE_X*sample1.SIZE_Y) = double(i+j+k -i*j*k);
+                *(space_arr + i + j*sample1.SIZE_X + k*sample1.SIZE_X*sample1.SIZE_Y) = 0; //double(i+j+k -i*j*k);
+                *(sampleARR + i + j*sample1.SIZE_X + k*sample1.SIZE_X*sample1.SIZE_Y)= 2;
                 //std::cout<<space_arr[i][j][k]<<'\n';
             }
         }
@@ -42,12 +43,14 @@ int main()
     <<sample1.dY<<'\n'
     <<sample1.ddY<<'\n';   
     */
-    //sample1.assign(space_arr);
-    cudaMemcpy(sample1.ADDRESS,space_arr,sample1.SIZE_X*sample1.SIZE_Y*sample1.SIZE_Z*sizeof(double),cudaMemcpyHostToDevice);
+    sample1.assign(sampleARR);
+    //cudaMemcpy(sample1.ADDRESS,space_arr,sample1.SIZE_X*sample1.SIZE_Y*sample1.SIZE_Z*sizeof(double),cudaMemcpyHostToDevice);
+    sample1.display();
     
-    //sample1.display();
-    cudaMemcpy(sampleARR,sample1.ADDRESS,sample1.SIZE_X*sample1.SIZE_Y*sample1.SIZE_Z*sizeof(double),cudaMemcpyDeviceToHost);
+    //cudaMemcpy(sampleARR,sample1.ADDRESS,sample1.SIZE_X*sample1.SIZE_Y*sample1.SIZE_Z*sizeof(double),cudaMemcpyDeviceToHost);
+    sample1.calx(2,5,space_arr);
     
+    sample1.display();
     std::cout<<"Sizes X Y Z "<<sample1.SIZE_X<<sample1.SIZE_Y<<sample1.SIZE_Z<<'\n';
     /*
     for(int i=0;i<sample1.SIZE_X;i++)

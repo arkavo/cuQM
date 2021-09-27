@@ -8,24 +8,16 @@ struct vector3
     float x,y,z;
 };
 
-
-/*
-__global__ void ASSIGN(double* ADDRESS,double *DATA)
-{
-    int idx = threadIdx.x + blockDim.x * blockIdx.x;
-    *(ADDRESS + idx) = *(DATA + idx);
-}
-*/
-__global__ void DERIVATIVE_STEP(double* y, double* ddy, double* V, double* E, int L)
+__global__ void DERIVATIVE_STEP(double* y, double* ddy, double* V, double E, int L)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
     if((idx>0) && (idx<(L-1)))
     {
-        *(ddy+idx) = ((*(V+idx) - (*E)) * *(y+idx));
+        *(ddy+idx) = ((*(V+idx) - (E)) * *(y+idx));
     }
     else
     {
-        *(ddy+idx) = (*(V+idx) - *E) ;
+        *(ddy+idx) = (*(V+idx) - E) ;
     }
 }
 
@@ -68,20 +60,21 @@ class SPACE
         double* dY;
         double* ddY;
         double* host_debug;
-
+        double step;
         int SIZE_X;
         int SIZE_Y;
         int SIZE_Z;
 
     unsigned long long SIZE0;
     
-    void initialize(int X,int Y,int Z)
+    void initialize(int x,int y,int z)
     {
-        SIZE_X = X;
-        SIZE_Y = Y;
-        SIZE_Z = Z;
+        SIZE_X = x;
+        SIZE_Y = y;
+        SIZE_Z = z;
         
         SIZE0 = int(SIZE_X*SIZE_Y*SIZE_Z*sizeof(double));
+        step = 1. / SIZE_X;
         cudaMalloc((void**)&ADDRESS,SIZE0);
         cudaMalloc((void**)&V,SIZE0);
         cudaMalloc((void**)&Y,SIZE0);
@@ -93,13 +86,13 @@ class SPACE
     
     void assign(double* DATA)
     {
-        cudaMemcpy(ADDRESS,DATA,SIZE0,cudaMemcpyHostToDevice);
+        cudaMemcpy(Y,DATA,SIZE0,cudaMemcpyHostToDevice);
         std::cout<<"Assigned\n";
     }
 
     void display()
     {
-        cudaMemcpy(host_debug,ADDRESS,SIZE0,cudaMemcpyDeviceToHost);
+        cudaMemcpy(host_debug,Y,SIZE0,cudaMemcpyDeviceToHost);
         for(int i=0;i<SIZE_X;i++)
         {
             for(int j=0;j<SIZE_Y;j++)
@@ -108,19 +101,24 @@ class SPACE
                 {
                     std::cout<<*(host_debug + i + j*SIZE_X + k*SIZE_X*SIZE_Y)<<' ';
                 }
-                std::cout<<'\n';
+                //std::cout<<'\n';
             }
-            for(int i=0;i<SIZE_X;i++)
+            /*for(int i=0;i<SIZE_X;i++)
             {
                 std::cout<<"_";
-            }
+            }*/
             std::cout<<"\n";
         }
     }
     
-    void calx(int threads,double* E,double* V)
+    void calx(int threads,double E,double* Vx)
     {
         int blocks = int(SIZE_X/threads); 
-        DERIVATIVE_STEP<<<blocks,threads>>>(Y,ddY,V,E,SIZE_X);
+        for(int i=0;i<100;i++)
+        {
+            DERIVATIVE_STEP<<<blocks,threads>>>(Y,ddY,Vx,E,SIZE_X);
+            UPDATE_STEP <<<blocks,threads>>> (Y,dY,ddY,step,SIZE_X);
+            FINAL_STEP <<<blocks,threads>>> (Y,dY,step,SIZE_X);
+        }
     }
 };
