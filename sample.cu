@@ -1,11 +1,19 @@
 #include "cuQMstd.cuh"
 #include <iostream>
+#include <stdio.h>
+#include <time.h>
+#include <chrono>
+#include <string>
 //#include "cuda.h"
 
-int main()
+int main(int argc, char* argv[])
 {
     SPACE sample1;
-    
+    int threads = 4;
+    if(argc==2)
+    {
+        threads = std::stoi(argv[1]);
+    }
     sample1.initialize(10,1,1);
     
     double* space_arr;
@@ -18,8 +26,8 @@ int main()
         {
             for(int k=0;k<sample1.SIZE_Z;k++)
             {
-                *(space_arr + i + j*sample1.SIZE_X + k*sample1.SIZE_X*sample1.SIZE_Y) = 0; //double(i+j+k -i*j*k);
-                *(sampleARR + i + j*sample1.SIZE_X + k*sample1.SIZE_X*sample1.SIZE_Y)= 2;
+                *(space_arr + i + j*sample1.SIZE_X + k*sample1.SIZE_X*sample1.SIZE_Y) = 1.0; //double(i+j+k -i*j*k);
+                *(sampleARR + i + j*sample1.SIZE_X + k*sample1.SIZE_X*sample1.SIZE_Y)= 2.0;
                 //std::cout<<space_arr[i][j][k]<<'\n';
             }
         }
@@ -43,14 +51,24 @@ int main()
     <<sample1.dY<<'\n'
     <<sample1.ddY<<'\n';   
     */
-    sample1.assign(sampleARR);
+    auto hst_st = std::chrono::high_resolution_clock::now();
+    
+    sample1.assign(sampleARR,space_arr);
+    
     //cudaMemcpy(sample1.ADDRESS,space_arr,sample1.SIZE_X*sample1.SIZE_Y*sample1.SIZE_Z*sizeof(double),cudaMemcpyHostToDevice);
+    
     sample1.display();
     
     //cudaMemcpy(sampleARR,sample1.ADDRESS,sample1.SIZE_X*sample1.SIZE_Y*sample1.SIZE_Z*sizeof(double),cudaMemcpyDeviceToHost);
-    sample1.calx(2,5,space_arr);
+    sample1.calx(threads,5.,space_arr);
+    
+    auto hst_en = std::chrono::high_resolution_clock::now();
     
     sample1.display();
+    
+    std::chrono::duration<float> duration = hst_en-hst_st;
+    std::cout<<"\nDuration: "<<duration.count()<<"\n";
+
     std::cout<<"Sizes X Y Z "<<sample1.SIZE_X<<sample1.SIZE_Y<<sample1.SIZE_Z<<'\n';
     /*
     for(int i=0;i<sample1.SIZE_X;i++)
@@ -65,7 +83,7 @@ int main()
     }
     */
     //insanely fast, print is the bootle neck
-    std::cout<<*(sampleARR+1000000-1)<<'\n';
+    std::cout<<*(sampleARR+sample1.SIZE_X*sample1.SIZE_Y*sample1.SIZE_Z -1)<<'\n';
     std::cout<<'\n';
     return 0;
 }

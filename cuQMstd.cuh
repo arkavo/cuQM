@@ -8,16 +8,16 @@ struct vector3
     float x,y,z;
 };
 
-__global__ void DERIVATIVE_STEP(double* y, double* ddy, double* V, double E, int L)
+__global__ void DERIVATIVE_STEP(double* Y, double* ddY, double* V, double E, int L)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
     if((idx>0) && (idx<(L-1)))
     {
-        *(ddy+idx) = ((*(V+idx) - (E)) * *(y+idx));
+        *(ddY+idx) = ((*(V+idx) - (E)) * *(Y+idx));
     }
     else
     {
-        *(ddy+idx) = (*(V+idx) - E) ;
+        *(ddY+idx) = (*(V+idx) - E) ;
     }
 }
 
@@ -36,7 +36,7 @@ __global__ void UPDATE_STEP(double* Y,double* dY, double* ddY,double step,int L)
 __global__ void FINAL_STEP(double* Y,double* dY,double step,int L)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
-    *(Y+idx) += *(dY+idx) * step;
+    *(Y+idx) += *(dY+idx) * step + 1;
 }
 
 __global__ void NORMALIZE_CONSTANT(double* Y,double* res)
@@ -84,20 +84,22 @@ class SPACE
         std::cout<<"Initialized\n";
     }
     
-    void assign(double* DATA)
+    void assign(double* DATA,double* POTENTIAL)
     {
         cudaMemcpy(Y,DATA,SIZE0,cudaMemcpyHostToDevice);
+        cudaMemcpy(V,POTENTIAL,SIZE0,cudaMemcpyHostToDevice);
         std::cout<<"Assigned\n";
     }
 
     void display()
     {
         cudaMemcpy(host_debug,Y,SIZE0,cudaMemcpyDeviceToHost);
-        for(int i=0;i<SIZE_X;i++)
+        
+        for(int k=0;k<SIZE_Z;k++)
         {
             for(int j=0;j<SIZE_Y;j++)
             {
-                for(int k=0;k<SIZE_Z;k++)
+                for(int i=0;i<SIZE_X;i++)
                 {
                     std::cout<<*(host_debug + i + j*SIZE_X + k*SIZE_X*SIZE_Y)<<' ';
                 }
@@ -116,8 +118,9 @@ class SPACE
         int blocks = int(SIZE_X/threads); 
         for(int i=0;i<100;i++)
         {
-            DERIVATIVE_STEP<<<blocks,threads>>>(Y,ddY,Vx,E,SIZE_X);
-            UPDATE_STEP <<<blocks,threads>>> (Y,dY,ddY,step,SIZE_X);
+            //std::cout<<step;
+            //DERIVATIVE_STEP <<<blocks,threads>>> (Y,ddY,Vx,E,SIZE_X);
+            //UPDATE_STEP <<<blocks,threads>>> (Y,dY,ddY,step,SIZE_X);
             FINAL_STEP <<<blocks,threads>>> (Y,dY,step,SIZE_X);
         }
     }
