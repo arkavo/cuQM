@@ -15,11 +15,11 @@ __global__ void DERIVATIVE_STEP(double* Y, double* ddY, double* V, double E, int
     {
         if((idx==0)||(idx==L-1))
         {
-            *(ddY+idx) = (*(V+idx) - E) ;
+            *(ddY+idx) = (*(V+idx) - E)/L;
         }
         else
         {
-            *(ddY+idx) = ((*(V+idx) - (E)) * *(Y+idx));
+            *(ddY+idx) = ((*(V+idx) - (E)) * *(Y+idx))/L;
         }
     }
 }
@@ -27,31 +27,44 @@ __global__ void DERIVATIVE_STEP(double* Y, double* ddY, double* V, double E, int
 __global__ void UPDATE_STEP(double* Y,double* dY, double* ddY,double step,int L)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
-    if((idx>0)&&(idx<(L-1)))
+    if(idx<L)
     {
-        *(dY+idx) += (*(ddY+idx+1)+*(ddY+idx-1))*step/2.;
-    }
-    else
-    {
-        *(dY+idx) += *(ddY+idx) * step;
+        if((idx==0)||(idx==L-1))
+        {
+            *(dY+idx) += *(ddY+idx) * step;
+        }
+        else
+        {
+            *(dY+idx) += (*(ddY+idx+1)+*(ddY+idx-1))*step/2.;
+        }
     }
 }
 __global__ void FINAL_STEP(double* Y,double* dY,double step,int L)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
-    *(Y+idx) += *(dY+idx) * step;
+    if(idx<L)
+    {
+        *(Y+idx) += *(dY+idx) * step;
+    }
 }
 
-__global__ void NORMALIZE_CONSTANT(double* Y,double* res)
+__global__ void NORMALIZE_CONSTANT(double* Y,double* res,int L)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
-    *res += pow(*(Y+idx),2);
+    if(idx<L)
+    {
+        *res += pow(*(Y+idx),2);
+    }
+    
 }
 
-__global__ void NORMALIZE_FUNCTION(double* Y, double* res)
+__global__ void NORMALIZE_FUNCTION(double* Y, double* res,int L)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
-    *(Y+idx) = *(Y+idx) / *res; 
+    if(idx<L)
+    {
+        *(Y+idx) = *(Y+idx) / *res;
+    } 
 }
 
 class SPACE
@@ -119,7 +132,7 @@ class SPACE
     void calx(int threads,double E)
     {
         int blocks = int(SIZE_X/threads); 
-        for(int i=0;i<100;i++)
+        for(int i=0;i<10000;i++)
         {
             //std::cout<<step;
             DERIVATIVE_STEP <<<blocks,threads>>> (Y,ddY,V,E,SIZE_X);

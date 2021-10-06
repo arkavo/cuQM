@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
     {
         threads = std::stoi(argv[1]);
     }
-    sample1.initialize(10,1,1);
+    sample1.initialize(10000,1,1);
     
     double* space_arr;
     double* sampleARR;
