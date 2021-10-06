@@ -11,13 +11,16 @@ struct vector3
 __global__ void DERIVATIVE_STEP(double* Y, double* ddY, double* V, double E, int L)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
-    if((idx>0) && (idx<(L-1)))
+    if(idx<L)
     {
-        *(ddY+idx) = ((*(V+idx) - (E)) * *(Y+idx));
-    }
-    else
-    {
-        *(ddY+idx) = (*(V+idx) - E) ;
+        if((idx==0)||(idx==L-1))
+        {
+            *(ddY+idx) = (*(V+idx) - E) ;
+        }
+        else
+        {
+            *(ddY+idx) = ((*(V+idx) - (E)) * *(Y+idx));
+        }
     }
 }
 
@@ -36,7 +39,7 @@ __global__ void UPDATE_STEP(double* Y,double* dY, double* ddY,double step,int L)
 __global__ void FINAL_STEP(double* Y,double* dY,double step,int L)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
-    *(Y+idx) += *(dY+idx) * step + 1;
+    *(Y+idx) += *(dY+idx) * step;
 }
 
 __global__ void NORMALIZE_CONSTANT(double* Y,double* res)
@@ -93,7 +96,7 @@ class SPACE
 
     void display()
     {
-        cudaMemcpy(host_debug,Y,SIZE0,cudaMemcpyDeviceToHost);
+        cudaMemcpy(host_debug,ddY,SIZE0,cudaMemcpyDeviceToHost);
         
         for(int k=0;k<SIZE_Z;k++)
         {
@@ -113,14 +116,14 @@ class SPACE
         }
     }
     
-    void calx(int threads,double E,double* Vx)
+    void calx(int threads,double E)
     {
         int blocks = int(SIZE_X/threads); 
         for(int i=0;i<100;i++)
         {
             //std::cout<<step;
-            //DERIVATIVE_STEP <<<blocks,threads>>> (Y,ddY,Vx,E,SIZE_X);
-            //UPDATE_STEP <<<blocks,threads>>> (Y,dY,ddY,step,SIZE_X);
+            DERIVATIVE_STEP <<<blocks,threads>>> (Y,ddY,V,E,SIZE_X);
+            UPDATE_STEP <<<blocks,threads>>> (Y,dY,ddY,step,SIZE_X);
             FINAL_STEP <<<blocks,threads>>> (Y,dY,step,SIZE_X);
         }
     }

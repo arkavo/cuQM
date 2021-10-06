@@ -18,8 +18,10 @@ int main(int argc, char* argv[])
     
     double* space_arr;
     double* sampleARR;
+    
     space_arr = (double*)malloc(sample1.SIZE_X*sample1.SIZE_Y*sample1.SIZE_Z*sizeof(double));
     sampleARR = (double*)malloc(sample1.SIZE_X*sample1.SIZE_Y*sample1.SIZE_Z*sizeof(double));
+    
     for(int i=0;i<sample1.SIZE_X;i++)
     {
         for(int j=0;j<sample1.SIZE_Y;j++)
@@ -60,7 +62,7 @@ int main(int argc, char* argv[])
     sample1.display();
     
     //cudaMemcpy(sampleARR,sample1.ADDRESS,sample1.SIZE_X*sample1.SIZE_Y*sample1.SIZE_Z*sizeof(double),cudaMemcpyDeviceToHost);
-    sample1.calx(threads,5.,space_arr);
+    sample1.calx(threads,5.);
     
     auto hst_en = std::chrono::high_resolution_clock::now();
     
