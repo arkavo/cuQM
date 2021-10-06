@@ -88,7 +88,7 @@ class SPACE
         SIZE_X = x;
         SIZE_Y = y;
         SIZE_Z = z;
-        
+        SIZE = SIZE_X*SIZE_Y*SIZE_Z;
         SIZE0 = int(SIZE_X*SIZE_Y*SIZE_Z*sizeof(double));
         step = 1. / SIZE_X;
         cudaMalloc((void**)&ADDRESS,SIZE0);
@@ -119,25 +119,20 @@ class SPACE
                 {
                     std::cout<<*(host_debug + i + j*SIZE_X + k*SIZE_X*SIZE_Y)<<' ';
                 }
-                //std::cout<<'\n';
             }
-            /*for(int i=0;i<SIZE_X;i++)
-            {
-                std::cout<<"_";
-            }*/
             std::cout<<"\n";
         }
     }
     
     void calx(int threads,double E)
     {
-        int blocks = int(SIZE_X/threads); 
+        int blocks = int(SIZE/threads); 
         for(int i=0;i<10000;i++)
         {
-            //std::cout<<step;
-            DERIVATIVE_STEP <<<blocks,threads>>> (Y,ddY,V,E,SIZE_X);
-            UPDATE_STEP <<<blocks,threads>>> (Y,dY,ddY,step,SIZE_X);
-            FINAL_STEP <<<blocks,threads>>> (Y,dY,step,SIZE_X);
+            //create a tolerance check here
+            DERIVATIVE_STEP <<<blocks,threads>>> (Y,ddY,V,E,SIZE);
+            UPDATE_STEP <<<blocks,threads>>> (Y,dY,ddY,step,SIZE);
+            FINAL_STEP <<<blocks,threads>>> (Y,dY,step,SIZE);
         }
     }
 };
