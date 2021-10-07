@@ -13,14 +13,7 @@ __global__ void DERIVATIVE_STEP(double* Y, double* ddY, double* V, double E, int
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
     if(idx<L)
     {
-        if((idx==0)||(idx==L-1))
-        {
-            *(ddY+idx) = (*(V+idx) - E)/L;
-        }
-        else
-        {
-            *(ddY+idx) = ((*(V+idx) - (E)) * *(Y+idx))/L;
-        }
+        *(ddY+idx) = ((*(V+idx) - (E)) * *(Y+idx))*100;
     }
 }
 
@@ -31,11 +24,11 @@ __global__ void UPDATE_STEP(double* Y,double* dY, double* ddY,double step,int L)
     {
         if((idx==0)||(idx==L-1))
         {
-            *(dY+idx) += *(ddY+idx) * step;
+          //  *(dY+idx) += *(ddY+idx) * step;
         }
         else
         {
-            *(dY+idx) += (*(ddY+idx+1)+*(ddY+idx-1))*step/2.;
+            *(dY+idx) += (*(ddY+idx+1) + *(ddY+idx-1)) * step/2.;
         }
     }
 }
@@ -80,8 +73,8 @@ class SPACE
         int SIZE_X;
         int SIZE_Y;
         int SIZE_Z;
-
     unsigned long long SIZE0;
+    unsigned long long SIZE;
     
     void initialize(int x,int y,int z)
     {
@@ -90,7 +83,7 @@ class SPACE
         SIZE_Z = z;
         SIZE = SIZE_X*SIZE_Y*SIZE_Z;
         SIZE0 = int(SIZE_X*SIZE_Y*SIZE_Z*sizeof(double));
-        step = 1. / SIZE_X;
+        step = 0.01;
         cudaMalloc((void**)&ADDRESS,SIZE0);
         cudaMalloc((void**)&V,SIZE0);
         cudaMalloc((void**)&Y,SIZE0);
@@ -109,7 +102,7 @@ class SPACE
 
     void display()
     {
-        cudaMemcpy(host_debug,ddY,SIZE0,cudaMemcpyDeviceToHost);
+        cudaMemcpy(host_debug,Y,SIZE0,cudaMemcpyDeviceToHost);
         
         for(int k=0;k<SIZE_Z;k++)
         {
@@ -126,13 +119,24 @@ class SPACE
     
     void calx(int threads,double E)
     {
-        int blocks = int(SIZE/threads); 
-        for(int i=0;i<10000;i++)
+        int blocks = int(SIZE/threads) + 1; 
+        for(int i=0;i<1000000;i++)
         {
             //create a tolerance check here
             DERIVATIVE_STEP <<<blocks,threads>>> (Y,ddY,V,E,SIZE);
             UPDATE_STEP <<<blocks,threads>>> (Y,dY,ddY,step,SIZE);
             FINAL_STEP <<<blocks,threads>>> (Y,dY,step,SIZE);
         }
+    }
+
+    void memclear()
+    {
+        cudaFree(ADDRESS);
+        cudaFree(V);
+        cudaFree(Y);
+        cudaFree(dY);  
+        cudaFree(ddY);
+        cudaFree(host_debug);
+        //cudaFree(step);
     }
 };
