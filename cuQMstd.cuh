@@ -7,13 +7,20 @@ struct vector3
 {
     float x,y,z;
 };
-
-__global__ void DERIVATIVE_STEP(double* Y, double* ddY, double* V, double E, int L)
+// void build(double* Y,double* V,double y0,double step,double E, int size)
+// {
+//     *Y = y0;
+//     for(int i=1;i<size-1;i++)
+//     {
+//         *(Y+i+1) = (E - *(V+i))* *(Y+i) + *(Y+i-1);
+//     }
+//}
+__global__ void DERIVATIVE_STEP(double* Y, double* dY, double* V, double E, int L)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
     if(idx<L)
     {
-        *(ddY+idx) = ((*(V+idx) - (E)) * *(Y+idx))*100;
+        *(dY+idx) = ((*(V+idx) - (E)) * *(Y+idx)) - *(dY+idx);
     }
 }
 
@@ -120,13 +127,16 @@ class SPACE
     void calx(int threads,double E)
     {
         int blocks = int(SIZE/threads) + 1; 
+        
         for(int i=0;i<1000000;i++)
         {
             //create a tolerance check here
-            DERIVATIVE_STEP <<<blocks,threads>>> (Y,ddY,V,E,SIZE);
-            UPDATE_STEP <<<blocks,threads>>> (Y,dY,ddY,step,SIZE);
+            DERIVATIVE_STEP <<<blocks,threads>>> (Y,dY,V,E,SIZE);
+            //UPDATE_STEP <<<blocks,threads>>> (Y,dY,ddY,step,SIZE);
             FINAL_STEP <<<blocks,threads>>> (Y,dY,step,SIZE);
         }
+        
+        //build(Y,V,3,step,E,SIZE);
     }
 
     void memclear()

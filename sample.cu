@@ -39,8 +39,8 @@ int main(int argc, char* argv[])
         {
             for(int k=0;k<sample1.SIZE_Z;k++)
             {
-                *(space_arr + i + j*sample1.SIZE_X + k*sample1.SIZE_X*sample1.SIZE_Y) = 2.0; //double(i+j+k -i*j*k);
-                *(sampleARR + i + j*sample1.SIZE_X + k*sample1.SIZE_X*sample1.SIZE_Y)= 1.0;
+                *(space_arr + i + j*sample1.SIZE_X + k*sample1.SIZE_X*sample1.SIZE_Y) = 200.0; //double(i+j+k -i*j*k);
+                *(sampleARR + i + j*sample1.SIZE_X + k*sample1.SIZE_X*sample1.SIZE_Y)= 100.0;
             }
         }
     }
