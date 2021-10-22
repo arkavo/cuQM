@@ -28,7 +28,8 @@ void display(double* parameter,int L)
 
 int main()
 {
-    int L = 100;
+    
+    int L = 1000;
     int n = 1;
     double* res;
     res = wavefxn(L,n);
